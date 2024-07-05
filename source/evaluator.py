@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from pykrx import stock
-from stock_trading_env import StockTradingEnv
+from source.environments.stock_trading_env import StockTradingEnv
 from agents.dqn_agent import DQNAgent
 from agents.ppo_agent import PPOAgent
 from agents.a2c_agent import A2CAgent

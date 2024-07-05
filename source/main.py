@@ -1,7 +1,7 @@
 import argparse
 from config import config, update_config
-from stocktrainer import StockTrainer
-from stockevaluator import StockEvaluator
+from source.trainer import StockTrainer
+from source.evaluator import StockEvaluator
 import logging
 
 def setup_logging():
