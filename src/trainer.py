@@ -1,6 +1,6 @@
 import numpy as np
 from pykrx import stock
-from source.environments.stock_trading_env import StockTradingEnv
+from environments.stock_trading_env import StockTradingEnv
 from agents.dqn_agent import DQNAgent
 from agents.ppo_agent import PPOAgent
 from agents.a2c_agent import A2CAgent
