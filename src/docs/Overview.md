@@ -1,64 +1,106 @@
-# 프로젝트의 전체 파일 구조
+# RL Stock Trader 프로젝트 개요
 
-```markdown
-project_root/
-├── main.py
+## 프로젝트 구조
+
+```
+rl_stock_trader/
+├── README.md
+├── requirements.txt
 ├── config.py
-├── stocktrainer.py
-├── stockevaluator.py
-├── stock_trading_env.py
-├── agents/
-│   ├── __init__.py
-│   ├── dqn_agent.py
-│   ├── ppo_agent.py
-│   └── a2c_agent.py
+├── main.py
+├── docs/
+│   └── Overview.md (현재 파일)
 ├── models/
-│   └── (저장된 모델 파일들)
-└── results/
-    └── (평가 결과 그래프 파일들)
+│   ├── 005930_dqn.pth
+│   └── 066570_dqn.pth
+├── results/
+│   ├── 005930_dqn.png
+│   └── 066570_dqn.png
+└── src/
+    ├── agents/
+    │   ├── __init__.py
+    │   ├── a2c_agent.py
+    │   ├── dqn_agent.py
+    │   └── ppo_agent.py
+    ├── environments/
+    │   ├── __init__.py
+    │   └── stock_trading_env.py
+    ├── utils/
+    │   ├── __init__.py
+    │   ├── data_loader.py
+    │   └── visualizer.py
+    ├── trainer.py
+    └── evaluator.py
 ```
 
-### 파일 및 디렉토리 설명:
+## 주요 컴포넌트 설명
 
-1. `main.py`
-   - 프로그램의 진입점
-   - 명령줄 인자를 파싱하고 전체 실행 흐름을 관리
+### 1. config.py
+- 프로젝트의 전역 설정을 관리
+- 학습 및 평가에 필요한 파라미터들을 정의
 
-2. `config.py`
-   - 프로젝트의 전역 설정을 관리
-   - 학습 및 평가에 필요한 파라미터들을 정의
+### 2. main.py
+- 프로그램의 진입점
+- 명령줄 인자를 파싱하고 전체 실행 흐름을 관리
 
-3. `stocktrainer.py`
-   - `StockTrainer` 클래스 정의
-   - 주식 데이터를 가져오고 강화학습 모델을 학습시키는 로직 포함
+### 3. src/environments/stock_trading_env.py
+- `StockTradingEnv` 클래스 정의
+- OpenAI Gym 스타일의 주식 거래 환경 구현
 
-4. `stockevaluator.py`
-   - `StockEvaluator` 클래스 정의
-   - 학습된 모델을 평가하고 결과를 시각화하는 로직 포함
+### 4. src/trainer.py
+- `StockTrainer` 클래스 정의
+- 주식 데이터를 가져오고 강화학습 모델을 학습시키는 로직 포함
 
-5. `stock_trading_env.py`
-   - `StockTradingEnv` 클래스 정의
-   - OpenAI Gym 스타일의 주식 거래 환경 구현
+### 5. src/evaluator.py
+- `StockEvaluator` 클래스 정의
+- 학습된 모델을 평가하고 결과를 시각화하는 로직 포함
 
-6. `agents/` 디렉토리
-   - 다양한 강화학습 알고리즘 에이전트들을 포함
-   - `dqn_agent.py`: DQN 알고리즘 구현
-   - `ppo_agent.py`: PPO 알고리즘 구현 (가정)
-   - `a2c_agent.py`: A2C 알고리즘 구현 (가정)
+### 6. src/agents/
+- 다양한 강화학습 알고리즘 에이전트들을 포함
+- `dqn_agent.py`: DQN 알고리즘 구현
+- `ppo_agent.py`: PPO 알고리즘 구현
+- `a2c_agent.py`: A2C 알고리즘 구현
 
-7. `models/` 디렉토리
-   - 학습된 모델 파일들이 저장되는 위치
+### 7. src/utils/
+- `data_loader.py`: 주식 데이터 로딩 유틸리티 함수
+- `visualizer.py`: 결과 시각화를 위한 유틸리티 함수
 
-8. `results/` 디렉토리
-   - 평가 결과 그래프 등이 저장되는 위치
+### 8. models/
+- 학습된 모델 파일들이 저장되는 위치
 
-이 구조는 모듈화된 설계를 따르고 있어, 각 컴포넌트가 명확한 역할을 가지고 있습니다. `main.py`를 통해 전체 시스템을 제어하고, `config.py`로 설정을 중앙에서 관리하며, 개별 에이전트들은 `agents/` 디렉토리에 분리되어 있어 새로운 알고리즘을 쉽게 추가할 수 있습니다. 학습된 모델과 평가 결과는 각각 `models/`와 `results/` 디렉토리에 저장되어 관리가 용이합니다.
+### 9. results/
+- 평가 결과 그래프 등이 저장되는 위치
 
-# config.py
+## 사용 방법
 
-`config.py` 파일은 프로젝트의 모든 설정을 중앙에서 관리하는 역할을 합니다. 이 파일은 학습, 평가, 그리고 각 강화학습 알고리즘에 필요한 모든 매개변수를 포함하고 있습니다.
+1. 환경 설정:
+   ```
+   pip install -r requirements.txt
+   ```
 
-## 주요 구성 요소
+2. 학습 실행:
+   ```
+   python main.py --mode train --agent dqn --ticker 005930
+   ```
+
+3. 평가 실행:
+   ```
+   python main.py --mode evaluate --agent dqn --ticker 005930
+   ```
+
+4. 학습과 평가 동시 실행:
+   ```
+   python main.py --mode both --agent dqn --ticker 005930
+   ```
+
+## 주의사항
+
+- `config.py`에서 학습 및 평가 관련 파라미터를 조정할 수 있습니다.
+- 새로운 강화학습 알고리즘을 추가하려면 `src/agents/` 디렉토리에 새 파일을 생성하고, `main.py`와 `config.py`를 적절히 수정해야 합니다.
+- 결과는 `results/` 디렉토리에 저장되며, 각 실행마다 고유한 파일명으로 저장됩니다.
+
+
+# 주요 구성 요소
 
 ### 1. config 딕셔너리
 
