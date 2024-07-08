@@ -4,8 +4,6 @@ import torch.optim as optim
 import numpy as np
 from torch.distributions import Categorical
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 class PPOActor(nn.Module):
     def __init__(self, state_size, action_size):
         super(PPOActor, self).__init__()
@@ -43,8 +41,8 @@ class PPOAgent:
         self.clip_ratio = clip_ratio
         self.epochs = epochs
 
-        self.actor = PPOActor(state_size, action_size).to(device)
-        self.critic = PPOCritic(state_size).to(device)
+        self.actor = PPOActor(state_size, action_size)
+        self.critic = PPOCritic(state_size)
         self.optimizer = optim.Adam(list(self.actor.parameters()) + list(self.critic.parameters()), lr=learning_rate)
 
         self.states = []
@@ -55,7 +53,7 @@ class PPOAgent:
         self.log_probs = []
 
     def act(self, state):
-        state = torch.FloatTensor(state).to(device)
+        state = torch.FloatTensor(state)
         probs = self.actor(state)
         dist = Categorical(probs)
         action = dist.sample()
@@ -72,12 +70,12 @@ class PPOAgent:
         self.log_probs.append(log_prob)
 
     def train(self):
-        states = torch.FloatTensor(self.states).to(device)
-        actions = torch.LongTensor(self.actions).to(device)
-        rewards = torch.FloatTensor(self.rewards).to(device)
-        next_states = torch.FloatTensor(self.next_states).to(device)
-        dones = torch.FloatTensor(self.dones).to(device)
-        old_log_probs = torch.FloatTensor(self.log_probs).to(device)
+        states = torch.FloatTensor(self.states)
+        actions = torch.LongTensor(self.actions)
+        rewards = torch.FloatTensor(self.rewards)
+        next_states = torch.FloatTensor(self.next_states)
+        dones = torch.FloatTensor(self.dones)
+        old_log_probs = torch.FloatTensor(self.log_probs)
 
         for _ in range(self.epochs):
             # Compute advantage
@@ -120,7 +118,7 @@ class PPOAgent:
         }, path)
 
     def load(self, path):
-        checkpoint = torch.load(path)
+        checkpoint = torch.load(path, map_location=torch.device('cpu'))
         self.actor.load_state_dict(checkpoint['actor_state_dict'])
         self.critic.load_state_dict(checkpoint['critic_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

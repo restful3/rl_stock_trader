@@ -11,6 +11,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Stock Trading RL')
     parser.add_argument('--mode', choices=['train', 'evaluate', 'both'], default='both', help='Operation mode')
     parser.add_argument('--agent', choices=['dqn', 'ppo', 'a2c'], default='dqn', help='RL agent type')
+    parser.add_argument('--net', choices=['dnn', 'lstm'], default='lstm', help='Network type')
     parser.add_argument('--ticker', type=str, default='005930', help='Stock ticker')
     parser.add_argument('--epochs', type=int, default=100, help='Number of training epochs')
     return parser.parse_args()
@@ -22,7 +23,8 @@ def main():
     update_config({
         'agent_type': args.agent, 
         'ticker': args.ticker,
-        'epochs': args.epochs
+        'epochs': args.epochs,
+        'net_type': args.net  # 네트워크 타입 추가
     })
         
     if args.mode in ['train', 'both']:

@@ -1,6 +1,6 @@
 import numpy as np
 from pykrx import stock
-from environments.stock_trading_env import StockTradingEnv
+from stock_trading_env import StockTradingEnv
 from agents.dqn_agent import DQNAgent
 from agents.ppo_agent import PPOAgent
 from agents.a2c_agent import A2CAgent
@@ -17,10 +17,11 @@ class StockTrainer:
         self.epochs = config['epochs']
         self.batch_size = config['batch_size']
         self.agent_type = config['agent_type']
-        self.state_size = config['state_size']
+        self.state_size = None
         self.action_size = config['action_size']
         self.agent = None
         self.env = None
+        self.sequence_length = config.get('lstm_sequence_length', 5)  # 기본값 5로 설정
 
     def get_stock_data(self):
         df = stock.get_market_ohlcv_by_date(self.start_date.strftime('%Y%m%d'), 
@@ -32,6 +33,9 @@ class StockTrainer:
 
     def create_agent(self):
         agent_config = get_agent_config(self.agent_type)
+        agent_config['state_size'] = self.state_size
+        agent_config['action_size'] = self.action_size
+        agent_config['lstm_sequence_length'] = self.sequence_length
         if self.agent_type == 'dqn':
             return DQNAgent(**agent_config)
         elif self.agent_type == 'ppo':
@@ -45,19 +49,25 @@ class StockTrainer:
         train_data = self.get_stock_data()
         train_data.reset_index(drop=True, inplace=True)
 
-        self.env = StockTradingEnv(train_data, initial_balance=self.initial_balance, commission_rate=self.commission_rate)
+        self.env = StockTradingEnv(train_data, initial_balance=self.initial_balance, 
+                                   commission_rate=self.commission_rate,
+                                   sequence_length=self.sequence_length)
+        
+        # 환경 초기화 후 상태 크기 업데이트
+        initial_state = self.env.reset()
+        self.state_size = initial_state.shape[1]  # 각 시점의 특성 수
+        
         self.agent = self.create_agent()
 
         for e in range(self.epochs):
             state = self.env.reset()
-            state = np.reshape(state, [1, self.state_size])
             episode_reward = 0
             done = False
+            step = 0
 
             while not done:
-                action = self.agent.act(state)
+                action = int(self.agent.act(state))
                 next_state, reward, done, _ = self.env.step(action)
-                next_state = np.reshape(next_state, [1, self.state_size])
                 
                 if self.agent_type == 'dqn':
                     self.agent.remember(state, action, reward, next_state, done)
@@ -68,9 +78,21 @@ class StockTrainer:
 
                 state = next_state
                 episode_reward += reward
+                step += 1
 
-            print(f"Episode: {e+1}/{self.epochs}, Reward: {episode_reward:.2f}, Final Balance: {self.env.balance:.2f}")
+                # 매 100 스텝마다 진행 상황 출력
+                if step % 100 == 0:
+                    print(f"Episode: {e+1}/{self.epochs}, Step: {step}, Current Reward: {episode_reward:.2f}, Current Balance: {self.env.balance:.2f}")
 
+            print(f"Episode: {e+1}/{self.epochs} completed. Total Reward: {episode_reward:.2f}, Final Balance: {self.env.balance:.2f}")
+            
+            # 매 10 에피소드마다 중간 저장
+            if (e + 1) % 10 == 0:
+                self.save_model()
+                print(f"Model saved at episode {e+1}")
+
+        print("Training completed.")
+        
     def get_company_name(self, ticker):
         # 종목 코드를 회사 이름으로 변환
         name = stock.get_market_ticker_name(ticker)
@@ -97,28 +119,8 @@ class StockTrainer:
         self.agent.save(model_path)
         print(f"Model saved to {model_path}")
 
-    # def save_model(self):
-    #     # 현재 파일의 디렉토리 경로를 가져옵니다.
-    #     current_dir = os.path.dirname(os.path.abspath(__file__))
-        
-    #     # models 디렉토리 경로를 생성합니다.
-    #     models_dir = os.path.join(current_dir, 'models')
-    #     os.makedirs(models_dir, exist_ok=True)
-        
-    #     # ticker를 그대로 사용합니다.
-    #     ticker = self.ticker
-        
-    #     # 파일명에 사용할 수 있도록 ticker에서 특수문자 제거 (필요한 경우)
-    #     ticker_clean = ''.join(e for e in ticker if e.isalnum())
-        
-    #     model_path = os.path.join(models_dir, f'{ticker_clean}_{self.agent_type}.pth')
-    #     self.agent.save(model_path)
-    #     print(f"Model saved to {model_path}")
-        
 if __name__ == "__main__":
     # 필요한 경우 설정 업데이트
-    # update_config({'epochs': 200, 'learning_rate': 0.0005})
-
     trainer = StockTrainer()
     trainer.train()
     trainer.save_model()

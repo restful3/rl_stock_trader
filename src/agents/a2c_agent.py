@@ -4,8 +4,6 @@ import torch.optim as optim
 import numpy as np
 from torch.distributions import Categorical
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 class A2CNetwork(nn.Module):
     def __init__(self, state_size, action_size):
         super(A2CNetwork, self).__init__()
@@ -34,7 +32,7 @@ class A2CAgent:
         self.gamma = gamma
         self.entropy_coef = entropy_coef
 
-        self.network = A2CNetwork(state_size, action_size).to(device)
+        self.network = A2CNetwork(state_size, action_size)
         self.optimizer = optim.Adam(self.network.parameters(), lr=learning_rate)
 
         self.states = []
@@ -42,7 +40,7 @@ class A2CAgent:
         self.rewards = []
 
     def act(self, state):
-        state = torch.FloatTensor(state).to(device)
+        state = torch.FloatTensor(state)
         probs, _ = self.network(state)
         dist = Categorical(probs)
         action = dist.sample()
@@ -54,9 +52,9 @@ class A2CAgent:
         self.rewards.append(reward)
 
     def train(self):
-        states = torch.FloatTensor(self.states).to(device)
-        actions = torch.LongTensor(self.actions).to(device)
-        rewards = torch.FloatTensor(self.rewards).to(device)
+        states = torch.FloatTensor(self.states)
+        actions = torch.LongTensor(self.actions)
+        rewards = torch.FloatTensor(self.rewards)
 
         # Compute returns
         returns = []
@@ -64,7 +62,7 @@ class A2CAgent:
         for r in self.rewards[::-1]:
             R = r + self.gamma * R
             returns.insert(0, R)
-        returns = torch.tensor(returns).to(device)
+        returns = torch.tensor(returns)
         returns = (returns - returns.mean()) / (returns.std() + 1e-5)
 
         # Compute actor and critic losses
@@ -96,6 +94,6 @@ class A2CAgent:
         }, path)
 
     def load(self, path):
-        checkpoint = torch.load(path)
+        checkpoint = torch.load(path, map_location=torch.device('cpu'))
         self.network.load_state_dict(checkpoint['network_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
